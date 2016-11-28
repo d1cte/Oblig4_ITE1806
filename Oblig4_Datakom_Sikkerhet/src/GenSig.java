@@ -1,34 +1,36 @@
 import java.io.*;
 import java.security.*;
-
+/* 	
+ * Har brukt eksempelkoden fra oracle.com
+*/
 class GenSig {
 
 
     public static void main(String[] args) {
+    	String keystoreName = "mykeystore";
+    	char[] keystorePassword = {'p', 'a', 's', 's', 'o', 'r', 'd'};
     	
-        /* Generate a DSA signature */
-
         if (args.length != 1) {
             System.out.println("Usage: GenSig nameOfFileToSign");
         }
         else try {
-        	// Create keypair generator
-        	KeyPairGenerator keyGen = KeyPairGenerator.getInstance("DSA", "SUN");
+        	// keystore
+        	KeyStore keystore = KeyStore.getInstance("JKS");
+        	FileInputStream keystoreFis = new FileInputStream(keystoreName);
+        	BufferedInputStream keystoreBufin = new BufferedInputStream(keystoreFis);
+        	keystore.load(keystoreBufin, keystorePassword);
         	
-        	// Inizialize keypair Generator
-        	SecureRandom random = SecureRandom.getInstance("SHA1PRNG", "SUN");
-        	keyGen.initialize(1024, random);
+        	PrivateKey privateKey = (PrivateKey) keystore.getKey("bk", keystorePassword);
         	
-        	// Generate the pair of keys
-        	KeyPair pair = keyGen.generateKeyPair();
-        	PrivateKey priv = pair.getPrivate();
-        	PublicKey pub = pair.getPublic();
+        	java.security.cert.Certificate certificate = keystore.getCertificate("bk");
         	
-        	// Get Signature object
-        	Signature dsa = Signature.getInstance("SHA1withDSA", "SUN");
+        	PublicKey publicKey = certificate.getPublicKey();
         	
-        	// Initalize Signature Object
-        	dsa.initSign(priv);
+        	
+        	// Signature
+        	Signature dsa = Signature.getInstance("SHA256withRSA");
+        	
+        	dsa.initSign(privateKey);
         	
         	// Supply the Signature Object the Data to be Signed
         	FileInputStream fis = new FileInputStream(args[0]);
@@ -49,12 +51,11 @@ class GenSig {
         	sigfos.close();
         	
         	/* save the public key in a file */
-        	byte[] key = pub.getEncoded();
+        	byte[] key = publicKey.getEncoded();
         	FileOutputStream keyfos = new FileOutputStream("bkpk");
         	keyfos.write(key);
         	keyfos.close();
-        	
-
+ 
         } catch (Exception e) {
             System.err.println("Caught exception " + e.toString());
         }
