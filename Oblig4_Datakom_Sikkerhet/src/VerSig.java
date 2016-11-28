@@ -1,58 +1,64 @@
 import java.io.*;
 import java.security.*;
-import java.security.spec.*;
 
 class VerSig {
 
     public static void main(String[] args) {
+    	String keystoreName = "friendskeystore";
+    	char[] keystorePassword = {'p', 'a', 's', 's', 'o', 'r', 'd'};
 
-        /* Verify a DSA signature */
-
-        if (args.length != 3) {
-            System.out.println("Usage: VerSig " +
-                "publickeyfile signaturefile " + "datafile");
+        if (args.length != 2) {
+            System.out.println("Usage: VerSig " + "signaturefile " + "datafile");
         }
         else try {
-
-        	// Read in encoded public key
-        	FileInputStream keyfis = new FileInputStream(args[0]);
-        	byte[] encKey = new byte[keyfis.available()];  
-        	keyfis.read(encKey);
-
-        	keyfis.close();
+        	// keystore
+        	KeyStore keystore = KeyStore.getInstance("JKS");
+        	FileInputStream keystoreFis = new FileInputStream(keystoreName);
+        	BufferedInputStream keystoreBufin = new BufferedInputStream(keystoreFis);
+        	keystore.load(keystoreBufin, keystorePassword);
         	
-        	// Key specification
-        	X509EncodedKeySpec pubKeySpec = new X509EncodedKeySpec(encKey);
+        	java.security.cert.Certificate certificate = keystore.getCertificate("bkcertificate");
         	
-        	KeyFactory keyFactory = KeyFactory.getInstance("DSA", "SUN");
+        	PublicKey publicKey = certificate.getPublicKey();
+//        	// Read in encoded public key
+//        	FileInputStream keyfis = new FileInputStream(args[0]);
+//        	byte[] encKey = new byte[keyfis.available()];  
+//        	keyfis.read(encKey);
+//
+//        	keyfis.close();
         	
-        	PublicKey pubKey = keyFactory.generatePublic(pubKeySpec);
+//        	// Key specification
+//        	X509EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(publicKey);
+//        	
+//        	KeyFactory keyFactory = KeyFactory.getInstance("DSA", "SUN");
+//        	
+//        	PublicKey pubKey = keyFactory.generatePublic(pubKeySpec);
         	
-        	// Input signature
-        	FileInputStream sigfis = new FileInputStream(args[1]);
-        	byte[] sigToVerify = new byte[sigfis.available()]; 
-        	sigfis.read(sigToVerify);
-        	sigfis.close();
+        	// Input signature bytes
+        	FileInputStream signatureFis = new FileInputStream(args[0]);
+        	byte[] signatureToVerify = new byte[signatureFis.available()]; 
+        	signatureFis.read(signatureToVerify);
+        	signatureFis.close();
 
         	// Initialize signature object for verification
-        	Signature sig = Signature.getInstance("SHA1withDSA", "SUN");
-        	sig.initVerify(pubKey);
+        	Signature signature = Signature.getInstance("SHA256withRSA", "SUN");
+        	signature.initVerify(publicKey);
         	
         	// Supply the Signature Object with the Data to be verified
-        	FileInputStream datafis = new FileInputStream(args[2]);
+        	FileInputStream datafis = new FileInputStream(args[1]);
         	BufferedInputStream bufin = new BufferedInputStream(datafis);
 
         	byte[] buffer = new byte[1024];
         	int len;
         	while (bufin.available() != 0) {
         	    len = bufin.read(buffer);
-        	    sig.update(buffer, 0, len);
+        	    signature.update(buffer, 0, len);
         	};
 
         	bufin.close();
         	
         	// Verify the signature
-        	boolean verifies = sig.verify(sigToVerify);
+        	boolean verifies = signature.verify(signatureToVerify);
 
         	System.out.println("signature verifies: " + verifies);
 

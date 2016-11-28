@@ -46,15 +46,15 @@ class GenSig {
         	byte[] realSig = dsa.sign();
         	
         	/* save the signature in a file */
-        	FileOutputStream sigfos = new FileOutputStream("sig");
+        	FileOutputStream sigfos = new FileOutputStream("signature");
         	sigfos.write(realSig);
         	sigfos.close();
-        	
-        	/* save the public key in a file */
-        	byte[] key = publicKey.getEncoded();
-        	FileOutputStream keyfos = new FileOutputStream("bkpk");
-        	keyfos.write(key);
-        	keyfos.close();
+     	
+//        	/* save the public key in a file */
+//        	byte[] key = publicKey.getEncoded();
+//        	FileOutputStream keyfos = new FileOutputStream("bkPublicKey");
+//        	keyfos.write(key);
+//        	keyfos.close();
  
         } catch (Exception e) {
             System.err.println("Caught exception " + e.toString());
