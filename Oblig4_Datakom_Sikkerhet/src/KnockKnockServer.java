@@ -1,4 +1,8 @@
 import java.net.*;
+
+import javax.net.ssl.*;
+
+
 import java.io.*;
 /* 	
  * Har brukt eksempelkoden fra oracle.com til både 
@@ -6,9 +10,12 @@ import java.io.*;
  * http://docs.oracle.com/javase/tutorial/networking/sockets/clientServer.html
 */
 public class KnockKnockServer {
-
+	static String keystore = "keystore";
+	static String keystorePassword = "passord";
+	
     public static void main(String[] args) throws IOException {
          
+    	
         if (args.length != 1) {
             System.err.println("Usage: java KnockKnockServer <port number>");
             System.exit(1);
@@ -16,14 +23,18 @@ public class KnockKnockServer {
  
         int portNumber = Integer.parseInt(args[0]);
  
-        try ( 
-            ServerSocket serverSocket = new ServerSocket(portNumber);
-            Socket clientSocket = serverSocket.accept();
+        try {
+        	System.setProperty("javac.net.ssl.keyStore", keystore);
+        	System.setProperty("javax.net.ssl.keyStorePassword", keystorePassword);
+        	SSLServerSocketFactory sslServerSocketFactory = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
+            SSLServerSocket sslServerSocket = (SSLServerSocket) sslServerSocketFactory.createServerSocket(portNumber);
+            
+            SSLSocket clientSocket = (SSLSocket) sslServerSocket.accept();
             PrintWriter out =
                 new PrintWriter(clientSocket.getOutputStream(), true);
             BufferedReader in = new BufferedReader(
                 new InputStreamReader(clientSocket.getInputStream()));
-        ) {
+         
          
             String inputLine, outputLine;
              

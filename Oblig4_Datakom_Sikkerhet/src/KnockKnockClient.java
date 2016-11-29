@@ -2,6 +2,9 @@
  
 import java.io.*;
 import java.net.*;
+
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 /* 	
  * Har brukt eksempelkoden fra oracle.com til både 
  * KnockKnockClient, KnockKnockServer og KnockKnockProtocol 
@@ -10,6 +13,7 @@ import java.net.*;
 public class KnockKnockClient {
 
     public static void main(String[] args) throws IOException {
+    	System.setProperty("javax.net.ssl.trustStore", "c:\\temp\\keystore");
          
         if (args.length != 2) {
             System.err.println(
@@ -19,13 +23,17 @@ public class KnockKnockClient {
  
         String hostName = args[0];
         int portNumber = Integer.parseInt(args[1]);
+        
  
-        try (
-            Socket kkSocket = new Socket(hostName, portNumber);
-            PrintWriter out = new PrintWriter(kkSocket.getOutputStream(), true);
+        try {
+        	SSLSocketFactory sslSocketFactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+            SSLSocket sslSocket = (SSLSocket) sslSocketFactory.createSocket(hostName, portNumber);
+            sslSocket.startHandshake();
+            
+            PrintWriter out = new PrintWriter(sslSocket.getOutputStream(), true);
             BufferedReader in = new BufferedReader(
-                new InputStreamReader(kkSocket.getInputStream()));
-        ) {
+                new InputStreamReader(sslSocket.getInputStream()));
+         
             BufferedReader stdIn =
                 new BufferedReader(new InputStreamReader(System.in));
             String fromServer;
