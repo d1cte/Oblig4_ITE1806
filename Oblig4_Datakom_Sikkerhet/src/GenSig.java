@@ -15,22 +15,22 @@ class GenSig {
 	static PrivateKey privateKey;
 
     public static void main(String[] args) {
-//    	String keystoreName = "mykeystore";
-//    	char[] keystorePassword = {'p', 'a', 's', 's', 'o', 'r', 'd'};
-    	
-    	
+
         if (args.length != 1) {
             System.out.println("Usage: GenSig nameOfFileToSign");
         }
         else try {
-        	importKeystore();
-        	setCertificateAndKeys();
+        	String fileToSign = args[0];
+        	
+        	inputKeystore();
+        	setCertificateAndPublicKey();
+        	setPrivateKey();
 
         	// Create Signature Object
         	Signature rsa = Signature.getInstance("SHA256withRSA");
         	rsa.initSign(privateKey);
         	
-        	byte[] realSignature = signDataAndGenerateSignature(args[0], rsa);
+        	byte[] realSignature = signDataAndGenerateSignature(fileToSign, rsa);
 
         	saveSignatureToFile(realSignature, "BKs-Signature");
      	
@@ -40,17 +40,20 @@ class GenSig {
         }
     }
     
-    public static void importKeystore() throws Exception {
+    public static void inputKeystore() throws Exception {
     	keystore = KeyStore.getInstance("JKS");
     	FileInputStream keystoreFis = new FileInputStream(keystoreName);
     	BufferedInputStream keystoreBufin = new BufferedInputStream(keystoreFis);
     	keystore.load(keystoreBufin, keystorePassword);
     }
     
-    public static void setCertificateAndKeys() throws Exception {
-    	privateKey = (PrivateKey) keystore.getKey(certificateAlias, keystorePassword);
+    public static void setCertificateAndPublicKey() throws Exception {
     	certificate = keystore.getCertificate(certificateAlias);
     	publicKey = certificate.getPublicKey();
+    }
+    
+    public static void setPrivateKey() throws Exception {
+    	privateKey = (PrivateKey) keystore.getKey(certificateAlias, keystorePassword);
     }
     
     public static byte[] signDataAndGenerateSignature(String dataToBeSigned, Signature sigAlgorithm) throws Exception {

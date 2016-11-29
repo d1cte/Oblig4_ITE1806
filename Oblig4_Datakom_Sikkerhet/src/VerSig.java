@@ -2,69 +2,80 @@ import java.io.*;
 import java.security.*;
 
 class VerSig {
+	static String keystoreName = "friendskeystore";
+	static KeyStore keystore;
+	static char[] keystorePassword;
+	
+	static String certificateAlias;
+	static java.security.cert.Certificate certificate;
+	
+	static PublicKey publicKey;
 
     public static void main(String[] args) {
-    	String keystoreName = "friendskeystore";
-    	char[] keystorePassword = {'p', 'a', 's', 's', 'o', 'r', 'd'};
-
-        if (args.length != 2) {
-            System.out.println("Usage: VerSig " + "signaturefile " + "datafile");
+    	
+        if (args.length != 4) {
+            System.out.println("Usage: VerSig " + "certificateAlias " + "password " + "signaturefile " + "datafile");
         }
         else try {
-        	// keystore
-        	KeyStore keystore = KeyStore.getInstance("JKS");
-        	FileInputStream keystoreFis = new FileInputStream(keystoreName);
-        	BufferedInputStream keystoreBufin = new BufferedInputStream(keystoreFis);
-        	keystore.load(keystoreBufin, keystorePassword);
+        	certificateAlias = args[0];
+        	keystorePassword = args[1].toCharArray();
+        	String signatureFile = args[2];
+        	String dataFile = args[3];
         	
-        	java.security.cert.Certificate certificate = keystore.getCertificate("bkcertificate");
+        	inputKeystore();
+        	setCertificateAndPublicKey();
+        
+        	byte[] signatureToVerify = inputSignatureBytes(signatureFile);
         	
-        	PublicKey publicKey = certificate.getPublicKey();
-//        	// Read in encoded public key
-//        	FileInputStream keyfis = new FileInputStream(args[0]);
-//        	byte[] encKey = new byte[keyfis.available()];  
-//        	keyfis.read(encKey);
-//
-//        	keyfis.close();
-        	
-//        	// Key specification
-//        	X509EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(publicKey);
-//        	
-//        	KeyFactory keyFactory = KeyFactory.getInstance("DSA", "SUN");
-//        	
-//        	PublicKey pubKey = keyFactory.generatePublic(pubKeySpec);
-        	
-        	// Input signature bytes
-        	FileInputStream signatureFis = new FileInputStream(args[0]);
-        	byte[] signatureToVerify = new byte[signatureFis.available()]; 
-        	signatureFis.read(signatureToVerify);
-        	signatureFis.close();
-
         	// Initialize signature object for verification
-        	Signature signature = Signature.getInstance("SHA256withRSA", "SUN");
+        	Signature signature = Signature.getInstance("SHA256WITHRSA", "SunRsaSign");
         	signature.initVerify(publicKey);
         	
-        	// Supply the Signature Object with the Data to be verified
-        	FileInputStream datafis = new FileInputStream(args[1]);
-        	BufferedInputStream bufin = new BufferedInputStream(datafis);
-
-        	byte[] buffer = new byte[1024];
-        	int len;
-        	while (bufin.available() != 0) {
-        	    len = bufin.read(buffer);
-        	    signature.update(buffer, 0, len);
-        	};
-
-        	bufin.close();
-        	
-        	// Verify the signature
-        	boolean verifies = signature.verify(signatureToVerify);
+        	boolean verifies = verifySignatureWithData(signature, signatureToVerify, dataFile);
 
         	System.out.println("signature verifies: " + verifies);
+
 
         } catch (Exception e) {
             System.err.println("Caught exception " + e.toString());
         }
     }
+    public static void inputKeystore() throws Exception {
+    	keystore = KeyStore.getInstance("JKS");
+    	FileInputStream keystoreFis = new FileInputStream(keystoreName);
+    	BufferedInputStream keystoreBufin = new BufferedInputStream(keystoreFis);
+    	keystore.load(keystoreBufin, keystorePassword);
+    }
+    
+    public static void setCertificateAndPublicKey() throws Exception {
+    	certificate = keystore.getCertificate(certificateAlias);
+    	publicKey = certificate.getPublicKey();
+    }
+    
+    public static byte[] inputSignatureBytes(String signatureFile) throws Exception {
+    	// Input signature bytes
+    	FileInputStream signatureFis = new FileInputStream(signatureFile);
+    	byte[] signatureToVerify = new byte[signatureFis.available()]; 
+    	signatureFis.read(signatureToVerify);
+    	signatureFis.close();
+    	return signatureToVerify;
+    }
+    
+    public static boolean verifySignatureWithData(Signature signature, byte[] signatureToVerify,  String dataFile) throws Exception {
+    	// Supply the Signature Object with the Data to be verified
+    	FileInputStream datafis = new FileInputStream(dataFile);
+    	BufferedInputStream bufin = new BufferedInputStream(datafis);
 
+    	byte[] buffer = new byte[1024];
+    	int len;
+    	while (bufin.available() != 0) {
+    	    len = bufin.read(buffer);
+    	    signature.update(buffer, 0, len);
+    	};
+
+    	bufin.close();
+    	
+    	// Verify the signature    	
+    	return signature.verify(signatureToVerify);
+    }
 }
