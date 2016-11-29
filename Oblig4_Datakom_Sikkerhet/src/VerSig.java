@@ -28,7 +28,7 @@ class VerSig {
         	byte[] signatureToVerify = inputSignatureBytes(signatureFile);
         	
         	// Initialize signature object for verification
-        	Signature signature = Signature.getInstance("SHA256WITHRSA", "SunRsaSign");
+        	Signature signature = Signature.getInstance("SHA256withRSA", "SunRsaSign");
         	signature.initVerify(publicKey);
         	
         	boolean verifies = verifySignatureWithData(signature, signatureToVerify, dataFile);
